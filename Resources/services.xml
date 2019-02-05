@@ -1,0 +1,30 @@
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+
+        <service class="SwagUserPriceSearchBundle\SearchBundleDBAL\CriteriaRequestHandler" id="swag_search.search_bundle_dbal.criteria_request_handler">
+            <tag name="criteria_request_handler"/>
+        </service>
+
+        <service class="SwagUserPriceSearchBundle\SearchBundleDBAL\Condition\UserPriceConditionHandler" id="swag_search.search_bundle_dbal_condition.user_price_condition_handler">
+            <tag name="condition_handler_dbal"/>
+            <argument type="service" id="config"/>
+            <argument type="service" id="dbal_connection"/>
+        </service>
+
+        <service class="SwagUserPriceSearchBundle\SearchBundleDBAL\Facet\UserPriceFacetHandler" id="swag_search.search_bundle_dbal_facet.userprice_facet_handler">
+            <tag name="facet_handler_dbal"/>
+            <argument type="service" id="shopware_searchdbal.dbal_query_builder_factory"/>
+            <argument type="service" id="snippets"/>
+            <argument type="service" id="shopware_storefront.list_product_service"/>
+            <argument type="service" id="shopware_storefront.graduated_prices_service"/>
+            <argument type="service" id="config"/>
+            <argument type="service" id="dbal_connection"/>
+            <argument type="service" id="query_alias_mapper"/>
+            <argument type="service" id="shopware_searchdbal.search_price_helper_dbal"/>
+            <argument type="service" id="session"/>
+        </service>
+    </services>
+</container>
