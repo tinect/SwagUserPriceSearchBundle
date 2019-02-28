@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/5.5/engine/Shopware/Components/Plugin/schema/config.xsd">
+
+    <elements>
+        <element type="number" required="true">
+            <name>ignoredPrice</name>
+            <label lang="de">ignoredPrice</label>
+            <label lang="en">ignoredPrice</label>
+            <value>0</value>
+        </element>
+        
+    </elements>
+</config>

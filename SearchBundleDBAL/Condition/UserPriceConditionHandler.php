@@ -82,24 +82,26 @@ class UserPriceConditionHandler implements ConditionHandlerInterface
             $minKey = ':priceMin' . $suffix;
             $maxKey = ':priceMax' . $suffix;
 
+            $currencyFactor = $context->getCurrency()->getFactor();
+
             /** @var UserPriceCondition $condition */
             if ($condition->getMaxPrice() > 0 && $condition->getMinPrice() > 0) {
                 $query->andWhere('customerPrice1.price BETWEEN ' . $minKey . ' AND ' . $maxKey);
-                $query->setParameter($minKey, $condition->getMinPrice());
-                $query->setParameter($maxKey, $condition->getMaxPrice());
+                $query->setParameter($minKey, $condition->getMinPrice() / $currencyFactor);
+                $query->setParameter($maxKey, $condition->getMaxPrice() / $currencyFactor);
 
                 return;
             }
             if ($condition->getMaxPrice() > 0) {
                 $query->andWhere('customerPrice1.price <= ' . $maxKey);
-                $query->setParameter($maxKey, $condition->getMaxPrice());
+                $query->setParameter($maxKey, $condition->getMaxPrice() / $currencyFactor);
 
                 return;
             }
 
             if ($condition->getMinPrice() > 0) {
                 $query->andWhere('customerPrice1.price >= ' . $minKey);
-                $query->setParameter($minKey, $condition->getMinPrice());
+                $query->setParameter($minKey, $condition->getMinPrice() / $currencyFactor);
 
                 return;
             }

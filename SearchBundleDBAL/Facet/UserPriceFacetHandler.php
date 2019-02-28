@@ -7,7 +7,6 @@ use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\FacetInterface;
 use Shopware\Bundle\SearchBundle\FacetResult\RangeFacetResult;
 use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
-use Shopware\Bundle\SearchBundleDBAL\PriceHelperInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactory;
 use Shopware\Bundle\StoreFrontBundle\Service\GraduatedPricesServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ListProductServiceInterface;
@@ -36,10 +35,6 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
      */
     private $graduatedPricesService;
     /**
-     * @var PriceHelperInterface
-     */
-    private $coreHelper;
-    /**
      * @var \Shopware_Components_Config
      */
     private $config;
@@ -58,13 +53,13 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
     private $searchPriceHelper;
 
     /**
-     * @param QueryBuilderFactory                  $queryBuilderFactory
+     * @param QueryBuilderFactory $queryBuilderFactory
      * @param \Shopware_Components_Snippet_Manager $snippetManager
-     * @param ListProductServiceInterface          $listProductService
-     * @param GraduatedPricesServiceInterface      $graduatedPricesService
-     * @param \Shopware_Components_Config          $config
-     * @param Connection                           $connection
-     * @param QueryAliasMapper                     $queryAliasMapper
+     * @param ListProductServiceInterface $listProductService
+     * @param GraduatedPricesServiceInterface $graduatedPricesService
+     * @param \Shopware_Components_Config $config
+     * @param Connection $connection
+     * @param QueryAliasMapper $queryAliasMapper
      * @param $searchPriceHelper
      * @param \Enlight_Components_Session_Namespace $session
      */
@@ -103,7 +98,7 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
      */
     public function supportsFacet(FacetInterface $facet)
     {
-        if (($facet instanceof \SwagUserPriceSearchBundle\SearchBundleDBAL\Facet\UserPriceFacet)) {
+        if (($facet instanceof UserPriceFacet)) {
             return true;
         } elseif (($facet instanceof \Shopware\Bundle\SearchBundle\Facet\PriceFacet)) {
             return true;
@@ -132,9 +127,15 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
         $pricehelper->buildQuery($query, 'customerPrice1',
             [':currentCustomerGroup', $context->getCurrentCustomerGroup()->getKey()]);
 
-        $min = $query->select('MIN(price)')->execute()->fetch(\PDO::FETCH_COLUMN);
+        $currencyFactor = $context->getCurrency()->getFactor();
 
-        $max = $query->andWhere('price<9999')->select('MAX(price)')->execute()->fetch(\PDO::FETCH_COLUMN);
+        $min = $query->select('MIN(price)')->execute()->fetch(\PDO::FETCH_COLUMN);
+        $min *= $currencyFactor;
+
+        $ignoredPrice = $this->config->getByNamespace('SwagUserPriceSearchBundle', 'ignoredPrice', '0');
+
+        $max = $query->andWhere('price<>' . $ignoredPrice)->select('MAX(price)')->execute()->fetch(\PDO::FETCH_COLUMN);
+        $max *= $currencyFactor;
 
         $activeMin = 0;
         $activeMax = 0;
@@ -157,17 +158,17 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
         }
 
         if ($facet->getName() == 'price') {
-            return;
+            return null;
         }
 
         return new RangeFacetResult(
             $facet->getName(),
             $criteria->hasCondition($facet->getName()),
             $this->snippetManager->getNamespace('frontend/detail/data')->get('DetailDataColumnPrice'),
-            (float) $min,
-            (float) $max,
-            (float) $activeMin,
-            (float) $activeMax,
+            (float)$min,
+            (float)$max,
+            (float)$activeMin,
+            (float)$activeMax,
             $this->minFieldName,
             $this->maxFieldName,
             [],
