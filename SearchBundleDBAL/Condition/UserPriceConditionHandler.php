@@ -31,8 +31,6 @@ class UserPriceConditionHandler implements ConditionHandlerInterface
     private $criteria;
 
     /**
-     * UserPriceConditionHandler constructor.
-     *
      * @param \Shopware_Components_Config           $config
      * @param Connection                            $connection
      * @param \Enlight_Components_Session_Namespace $session

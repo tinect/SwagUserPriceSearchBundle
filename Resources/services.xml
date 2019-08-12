@@ -23,8 +23,6 @@
             <argument type="service" id="config"/>
             <argument type="service" id="dbal_connection"/>
             <argument type="service" id="query_alias_mapper"/>
-            <argument type="service" id="shopware_searchdbal.search_price_helper_dbal"/>
-            <argument type="service" id="session"/>
         </service>
     </services>
 </container>
