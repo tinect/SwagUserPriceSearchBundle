@@ -3,16 +3,19 @@
 namespace SwagUserPriceSearchBundle\SearchBundleDBAL\Facet;
 
 use Doctrine\DBAL\Connection;
+use Enlight_Components_Session_Namespace;
+use PDO;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\Facet\PriceFacet;
 use Shopware\Bundle\SearchBundle\FacetInterface;
 use Shopware\Bundle\SearchBundle\FacetResult\RangeFacetResult;
 use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactory;
-use Shopware\Bundle\StoreFrontBundle\Service\GraduatedPricesServiceInterface;
-use Shopware\Bundle\StoreFrontBundle\Service\ListProductServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Components\QueryAliasMapper;
+use Shopware\SwagUserPrice\Bundle\SearchBundleDBAL\PriceHelper;
+use Shopware_Components_Config;
+use Shopware_Components_Snippet_Manager;
 use SwagUserPriceSearchBundle\SearchBundleDBAL\Condition\UserPriceCondition;
 
 class UserPriceFacetHandler implements PartialFacetHandlerInterface
@@ -23,22 +26,12 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
     private $queryBuilderFactory;
 
     /**
-     * @var \Shopware_Components_Snippet_Manager
+     * @var Shopware_Components_Snippet_Manager
      */
     private $snippetManager;
 
     /**
-     * @var ListProductServiceInterface
-     */
-    private $listProductService;
-
-    /**
-     * @var GraduatedPricesServiceInterface
-     */
-    private $graduatedPricesService;
-
-    /**
-     * @var \Shopware_Components_Config
+     * @var Shopware_Components_Config
      */
     private $config;
 
@@ -48,48 +41,37 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
     private $connection;
 
     /**
-     * @var \Enlight_Components_Session_Namespace
+     * @var Enlight_Components_Session_Namespace
      */
     private $session;
 
     private $minFieldName;
     private $maxFieldName;
-    /**
-     * @var QueryAliasMapper
-     */
-    private $queryAliasMapper;
 
     /**
-     * @param QueryBuilderFactory                  $queryBuilderFactory
-     * @param \Shopware_Components_Snippet_Manager $snippetManager
-     * @param ListProductServiceInterface          $listProductService
-     * @param GraduatedPricesServiceInterface      $graduatedPricesService
-     * @param \Shopware_Components_Config          $config
-     * @param Connection                           $connection
-     * @param QueryAliasMapper                     $queryAliasMapper
+     * @param QueryBuilderFactory                 $queryBuilderFactory
+     * @param Shopware_Components_Snippet_Manager $snippetManager
+     * @param Shopware_Components_Config          $config
+     * @param Connection                          $connection
+     * @param QueryAliasMapper                    $queryAliasMapper
      */
     public function __construct(
         QueryBuilderFactory $queryBuilderFactory,
-        \Shopware_Components_Snippet_Manager $snippetManager,
-        ListProductServiceInterface $listProductService,
-        GraduatedPricesServiceInterface $graduatedPricesService,
-        \Shopware_Components_Config $config,
+        Shopware_Components_Snippet_Manager $snippetManager,
+        Shopware_Components_Config $config,
         Connection $connection,
         QueryAliasMapper $queryAliasMapper
     ) {
         $this->queryBuilderFactory = $queryBuilderFactory;
         $this->snippetManager = $snippetManager;
-        $this->listProductService = $listProductService;
-        $this->graduatedPricesService = $graduatedPricesService;
         $this->config = $config;
         $this->connection = $connection;
-        $this->queryAliasMapper = $queryAliasMapper;
 
-        if (!$this->minFieldName = $this->queryAliasMapper->getShortAlias('min')) {
+        if (!$this->minFieldName = $queryAliasMapper->getShortAlias('min')) {
             $this->minFieldName = 'min';
         }
 
-        if (!$this->maxFieldName = $this->queryAliasMapper->getShortAlias('max')) {
+        if (!$this->maxFieldName = $queryAliasMapper->getShortAlias('max')) {
             $this->maxFieldName = 'max';
         }
     }
@@ -99,9 +81,11 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
      */
     public function supportsFacet(FacetInterface $facet)
     {
-        if (($facet instanceof UserPriceFacet)) {
+        if ($facet instanceof UserPriceFacet) {
             return true;
-        } elseif (($facet instanceof PriceFacet)) {
+        }
+
+        if ($facet instanceof PriceFacet) {
             return true;
         }
 
@@ -125,13 +109,13 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
         $this->session = Shopware()->Session();
 
         $query = $this->queryBuilderFactory->createQuery($queryCriteria, $context);
-        $pricehelper = new \Shopware\SwagUserPrice\Bundle\SearchBundleDBAL\PriceHelper(Shopware()->Container()->get('shopware_searchdbal.search_price_helper_dbal'),
+        $pricehelper = new PriceHelper(Shopware()->Container()->get('shopware_searchdbal.search_price_helper_dbal'),
             $this->config, $this->connection, $this->session);
         $pricehelper->buildQuery($query, 'customerPrice1',
             [':currentCustomerGroup', $context->getCurrentCustomerGroup()->getKey()]);
 
         $ignoredPrice = $this->config->getByNamespace('SwagUserPriceSearchBundle', 'ignoredPrice', 0);
-        $basequery = $query->andWhere('price<>' . $ignoredPrice)->select(['MIN(price) as min', 'MAX(price) as max'])->execute()->fetch(\PDO::FETCH_ASSOC);
+        $basequery = $query->andWhere('price<>' . $ignoredPrice)->select(['MIN(price) as min', 'MAX(price) as max'])->execute()->fetch(PDO::FETCH_ASSOC);
 
         $min = (float) $basequery['min'];
         $max = (float) $basequery['max'];
@@ -156,20 +140,20 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
             $activeMax = $max;
         }
 
-        if ($min == $max) {
+        if ($min === $max) {
             return null;
         }
 
-        if ($facet->getName() == 'price') {
-            return;
+        if ($facet->getName() === 'price') {
+            return null;
         }
 
         return new RangeFacetResult(
             $facet->getName(),
             $criteria->hasCondition($facet->getName()),
             $this->snippetManager->getNamespace('frontend/detail/data')->get('DetailDataColumnPrice'),
-            (float) $min,
-            (float) $max,
+            $min,
+            $max,
             (float) $activeMin,
             (float) $activeMax,
             $this->minFieldName,

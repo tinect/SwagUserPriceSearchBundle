@@ -18,8 +18,6 @@
             <tag name="facet_handler_dbal"/>
             <argument type="service" id="shopware_searchdbal.dbal_query_builder_factory"/>
             <argument type="service" id="snippets"/>
-            <argument type="service" id="shopware_storefront.list_product_service"/>
-            <argument type="service" id="shopware_storefront.graduated_prices_service"/>
             <argument type="service" id="config"/>
             <argument type="service" id="dbal_connection"/>
             <argument type="service" id="query_alias_mapper"/>

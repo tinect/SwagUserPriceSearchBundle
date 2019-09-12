@@ -20,15 +20,15 @@ class CriteriaRequestHandler implements CriteriaRequestHandlerInterface
         ShopContextInterface $context
     ) {
         if ($request->has('userpricemin') || $request->has('userpricemax') || $request->has('min') || $request->has('max')) {
-            $min = $request->getParam('userpricemin', null);
-            $max = $request->getParam('userpricemax', null);
+            $min = $request->getParam('userpricemin');
+            $max = $request->getParam('userpricemax');
 
             if (!$min) {
-                $min = $request->getParam('min', null);
+                $min = $request->getParam('min');
             }
 
             if (!$max) {
-                $max = $request->getParam('max', null);
+                $max = $request->getParam('max');
             }
 
             if (!$min && !$max) {

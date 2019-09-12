@@ -3,17 +3,21 @@
 namespace SwagUserPriceSearchBundle\SearchBundleDBAL\Condition;
 
 use Doctrine\DBAL\Connection;
+use Enlight_Components_Session_Namespace;
+use Shopware\Bundle\SearchBundle\Condition\PriceCondition;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundleDBAL\ConditionHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
+use Shopware\SwagUserPrice\Bundle\SearchBundleDBAL\PriceHelper;
+use Shopware_Components_Config;
 
 class UserPriceConditionHandler implements ConditionHandlerInterface
 {
-    const STATE_USERPRICE_INCLUDED = 'userprice_include';
+    public const STATE_USERPRICE_INCLUDED = 'userprice_include';
     /**
-     * @var \Shopware_Components_Config
+     * @var Shopware_Components_Config
      */
     private $config;
     /**
@@ -21,7 +25,7 @@ class UserPriceConditionHandler implements ConditionHandlerInterface
      */
     private $connection;
     /**
-     * @var \Enlight_Components_Session_Namespace
+     * @var Enlight_Components_Session_Namespace
      */
     private $session;
 
@@ -31,12 +35,11 @@ class UserPriceConditionHandler implements ConditionHandlerInterface
     private $criteria;
 
     /**
-     * @param \Shopware_Components_Config           $config
-     * @param Connection                            $connection
-     * @param \Enlight_Components_Session_Namespace $session
+     * @param Shopware_Components_Config $config
+     * @param Connection                 $connection
      */
     public function __construct(
-        \Shopware_Components_Config $config,
+        Shopware_Components_Config $config,
         Connection $connection
     ) {
         $this->config = $config;
@@ -48,9 +51,11 @@ class UserPriceConditionHandler implements ConditionHandlerInterface
      */
     public function supportsCondition(ConditionInterface $condition)
     {
-        if (($condition instanceof UserPriceCondition)) {
+        if ($condition instanceof UserPriceCondition) {
             return true;
-        } elseif (($condition instanceof \Shopware\Bundle\SearchBundle\Condition\PriceCondition)) {
+        }
+
+        if ($condition instanceof PriceCondition) {
             return true;
         }
 
@@ -69,7 +74,7 @@ class UserPriceConditionHandler implements ConditionHandlerInterface
             $this->session = Shopware()->Session();
             $query->addState(self::STATE_USERPRICE_INCLUDED);
 
-            $pricehelper = new \Shopware\SwagUserPrice\Bundle\SearchBundleDBAL\PriceHelper(Shopware()->Container()->get('shopware_searchdbal.search_price_helper_dbal'),
+            $pricehelper = new PriceHelper(Shopware()->Container()->get('shopware_searchdbal.search_price_helper_dbal'),
                 $this->config, $this->connection, $this->session);
             $pricehelper->joinAvailableVariant($query);
             $pricehelper->buildQuery($query, 'customerPrice1',

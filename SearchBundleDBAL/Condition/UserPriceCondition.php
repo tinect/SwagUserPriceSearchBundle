@@ -3,6 +3,7 @@
 namespace SwagUserPriceSearchBundle\SearchBundleDBAL\Condition;
 
 use Assert\Assertion;
+use Assert\AssertionFailedException;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 
 class UserPriceCondition implements ConditionInterface
@@ -21,7 +22,7 @@ class UserPriceCondition implements ConditionInterface
      * @param float $minPrice
      * @param float $maxPrice
      *
-     * @throws \Assert\AssertionFailedException
+     * @throws AssertionFailedException
      */
     public function __construct($minPrice = 0.00, $maxPrice = 0.00)
     {
