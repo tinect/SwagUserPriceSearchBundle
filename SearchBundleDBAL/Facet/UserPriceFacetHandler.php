@@ -107,7 +107,11 @@ class UserPriceFacetHandler implements PartialFacetHandlerInterface
         $queryCriteria->resetSorting();
 
         $this->session = Shopware()->Session();
-
+        
+        if (!$this->session->offsetGet('sUserId')) {
+            $this->session->offsetSet('sUserId', 0);
+        }
+        
         $query = $this->queryBuilderFactory->createQuery($queryCriteria, $context);
         $pricehelper = new PriceHelper(Shopware()->Container()->get('shopware_searchdbal.search_price_helper_dbal'),
             $this->config, $this->connection, $this->session);
